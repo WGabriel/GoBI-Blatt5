@@ -13,7 +13,7 @@ import org.apache.commons.math3.distribution.HypergeometricDistribution;
 import org.apache.commons.math3.stat.inference.KolmogorovSmirnovTest;
 
 public class Runner {
-    // test
+
     public static void main(String[] args) {
         File obo = new File(""); // GO obo_file
         String root = ""; // GO namespace [biological_process, cellular_component, molecular_function]
@@ -607,7 +607,7 @@ public class Runner {
     }
 
     public static HashMap<String, HashMap<String, GOclass>> parseAssociatedGeneIds(String mappingtype, File mapping,
-                                                                                          HashMap<String, HashMap<String, GOclass>> namespaces, String root) {
+                                                                                   HashMap<String, HashMap<String, GOclass>> namespaces, String root) {
         // mappingtype defines how mapping is processed
         if (mappingtype.equals("go")) {
             try {
