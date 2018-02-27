@@ -339,6 +339,8 @@ public class Runner {
     public static String getShortestStringPath(String childGoId, String parentGoId, HashMap<String, GOclass> namespace) {
         if (namespace.get(childGoId).shortestPathToGO.containsKey(parentGoId)) {
             return namespace.get(childGoId).shortestPathToGO.get(parentGoId);
+        } else if (childGoId.equals(parentGoId)) {
+            return childGoId;
         } else {
             String maxValue = "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||";
             // counts how often pipe ('|') occurs
