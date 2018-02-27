@@ -13,6 +13,7 @@ public class Test {
         System.out.println("myParse.size: " + myParse.size());
         System.out.println("theirParse.size: " + theirParse.size());
 
+        int counter = 0;
         for (String myGeneId : myParse.keySet()) {
             if (theirParse.containsKey(myGeneId)) {
                 // my geneId is contained in their solution
@@ -20,7 +21,8 @@ public class Test {
                 int theirPipe = theirParse.get(myGeneId).length() - theirParse.get(myGeneId).replace("|", "").length();
 
                 if (myPipe != theirPipe) {
-                    System.err.println("Amount of pipes not equal.");
+                    counter++;
+                    System.err.println("Amount of pipes not equal. (Nr.:" + counter + ")");
                     System.err.println("Myyyy path (" + myPipe + "): " + myParse.get(myGeneId));
                     System.err.println("Their path (" + theirPipe + "): " + theirParse.get(myGeneId));
                 }
