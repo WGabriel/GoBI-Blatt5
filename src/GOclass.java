@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -15,8 +16,7 @@ public class GOclass {
     public HashSet<String> associatedGenes;
 
     // Key = GO, String = Path (e.g. negative regulation of growth|response to stimulus|biological_process )
-    public HashMap<String, String> shortestPathToGO;
-
+    public HashMap<String, ArrayList<String>> shortestPathToGO;
 
     // [Term]
     // id: GO:0000001

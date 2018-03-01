@@ -23,8 +23,8 @@ public class Test {
                 if (myPipe != theirPipe) {
                     counter++;
                     System.err.println("Amount of pipes not equal. (Nr.:" + counter + ")");
-                    System.err.println("Myyyy path (" + myPipe + "): " + myParse.get(myGeneId));
-                    System.err.println("Their path (" + theirPipe + "): " + theirParse.get(myGeneId));
+                    System.err.println("Myyyy path (" + myPipe + "): " + myGeneId + " " + myParse.get(myGeneId));
+                    System.err.println("Their path (" + theirPipe + "): " + myGeneId + " " + theirParse.get(myGeneId));
                 }
 
             } else {

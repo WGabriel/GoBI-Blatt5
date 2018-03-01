@@ -299,42 +299,72 @@ public class Runner {
 
     public static String getShortestPathToTrue(String goId, HashSet<String> enrichGOs, HashMap<String, GOclass> namespace) {
         // System.out.println("|getShortestPathToTrue| Begin calculation with " + goId);
-        String shortestPath = "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||";
-        // counts how often pipe ('|') occurs
-        int pipesInShortestPath = shortestPath.length() - shortestPath.replace("|", "").length();
+
+        // Add paths GO->CommonGO plus enrichGO->CommonGO
+        ArrayList<String> shortestPathGoToCommon = new ArrayList<>();
+        ArrayList<String> shortestEnrichGOToCommon = new ArrayList<>();
+        double shortestPathLength = Integer.MAX_VALUE;
 
         for (String goId_enrich : enrichGOs) {
-            //System.out.println("Current enrichGO: " + goId_enrich);
             // For every geneId in enrichGOs, gather common GO's
-            ArrayList<String> commonGOs = new ArrayList<>();
-            for (String is_a : namespace.get(goId).is_a_updated) {
-                if (goId_enrich.equals(is_a)) {
-                    commonGOs.add(is_a);
-                }
-                if (namespace.get(goId_enrich).is_a_updated.contains(is_a)) {
-                    commonGOs.add(is_a);
-                }
+            // System.out.println("Current enrichGO: " + goId_enrich);
+
+            //error checking
+            if (goId_enrich.equals(goId)) {
+                System.err.println("|getShortestPathToTrue| goId is not allowed to occur in enrichGO's: " + goId);
             }
+            //commonGOs is an intersection of enrich_goId.is_a and goId_is_a
+            HashSet<String> commonGOs = new HashSet<>(namespace.get(goId).is_a_updated); // use the copy constructor
+            commonGOs.retainAll(namespace.get(goId_enrich).is_a_updated);
+
+            // add goId, if it occurs in goId_enrich.is_a_updated
+            if (namespace.get(goId_enrich).is_a_updated.contains(goId)) {
+                commonGOs.add(namespace.get(goId_enrich).id);
+            }
+            // add goId_enrich, if it occurs in goId.is_a_updated
+            if (namespace.get(goId).is_a_updated.contains(goId_enrich)) {
+                commonGOs.add(namespace.get(goId).id);
+            }
+
 
             // End: gathering common GO's
 
             if (!commonGOs.isEmpty()) {
                 for (String common : commonGOs) {
-                    // Add paths GO->CommonGO plus enrichGO->CommonGO
-                    String tempPathGoToCommon = getShortestStringPath(goId, common, namespace);
-                    String tempEnrichGOToCommon = invertPath(getShortestStringPath(goId_enrich, common, namespace));
-                    String tempResultPath;
-                    if (tempEnrichGOToCommon.length() - tempEnrichGOToCommon.replace("|", "").length() < 1) {
-                        System.out.println("CurrGO: " + goId + " tempEnrichGOToCommon has no pipes: " + tempEnrichGOToCommon + " with tempPathGoToCommon: " + tempPathGoToCommon);
-                        tempResultPath = tempPathGoToCommon;
+                    // constructing path GO-->Common
+                    ArrayList<String> tempPathGoToCommon = new ArrayList<>();
+                    if (goId.equals(common)) {
+                        System.out.println("goId: " + goId + " common: " + common);
+                        tempPathGoToCommon = new ArrayList<>();
+                        tempPathGoToCommon.add(namespace.get(goId).name);
                     } else {
-                        tempResultPath = tempPathGoToCommon.concat(" * |").concat(tempEnrichGOToCommon.substring(tempEnrichGOToCommon.indexOf("|") + 1));
+                        try {
+                            tempPathGoToCommon = getShortestStringPath(goId, common, namespace);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     }
-                    int pipeInTempResult = tempResultPath.length() - tempResultPath.replace("|", "").length();
 
-                    if (pipeInTempResult < pipesInShortestPath) {
-                        pipesInShortestPath = pipeInTempResult;
-                        shortestPath = tempResultPath;
+                    // constructing path EnrichGO-->Common
+                    ArrayList<String> tempEnrichGOToCommon = new ArrayList<>();
+                    if (goId_enrich.equals(common)) {
+                        System.out.println("GO_enrich: " + goId_enrich + " common: " + common);
+                        tempEnrichGOToCommon = new ArrayList<>();
+                        tempEnrichGOToCommon.add(namespace.get(goId_enrich).name);
+                    } else {
+                        try {
+                            tempEnrichGOToCommon = getShortestStringPath(goId_enrich, common, namespace);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    if ((tempPathGoToCommon.size() + tempEnrichGOToCommon.size()) < shortestPathLength) {
+                        shortestPathLength = (tempPathGoToCommon.size() + tempEnrichGOToCommon.size());
+
+                        shortestPathGoToCommon.clear();
+                        shortestPathGoToCommon = (ArrayList<String>) tempPathGoToCommon.clone();
+                        shortestEnrichGOToCommon.clear();
+                        shortestEnrichGOToCommon = (ArrayList<String>) tempEnrichGOToCommon.clone();
                     }
                 }
             } else {
@@ -342,52 +372,90 @@ public class Runner {
                 System.err.println("|getShortestPathToTrue| No common GO with " + goId);
             }
         }
-        // System.out.println("|getShortestPathToTrue| Shortest Path for " + goId + " to enrichGOs is: " + shortestPath);
-        return shortestPath;
-    }
 
-    public static ArrayList<String> getShortestStringPath(String childGoId, String parentGoId, HashMap<String, GOclass> namespace) {
-        if (namespace.get(childGoId).shortestPathToGO.containsKey(parentGoId)) {
-            // Avoid double calculation
-            return namespace.get(childGoId).shortestPathToGO.get(parentGoId);
-        } else if (childGoId.equals(parentGoId)) {
-            return new ArrayList<>();
-        } else {
-            String maxValue = "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||";
-            // counts how often pipe ('|') occurs
-            int pipeInMaxValue = maxValue.length() - maxValue.replace("|", "").length();
-
-            String result = namespace.get(childGoId).name;
-            ArrayList<String> result = new ArrayList<>()
-            if (namespace.get(childGoId).is_a_original.contains(parentGoId)) {
-                result = result.concat("|").concat(namespace.get(parentGoId).name);
-                namespace.get(childGoId).shortestPathToGO.put(parentGoId, result);
-                return result;
-            } else if (namespace.get(childGoId).is_a_original.isEmpty()) {
-                // This path leads not to a result
-                result.concat(maxValue);
-                namespace.get(childGoId).shortestPathToGO.put(parentGoId, result);
-                return result;
+        //convert ArrayList<String> shortestPathGoToCommon to result String
+        String result = "";
+        for (int i = 0; i < shortestPathGoToCommon.size(); i++) {
+            if (i == 0) {
+                result = shortestPathGoToCommon.get(i);
             } else {
-                String bestResult = maxValue;
-                int pipeInBestResult = bestResult.length() - bestResult.replace("|", "").length();
-
-                for (String go : namespace.get(childGoId).is_a_original) {
-                    String tempResult = getShortestStringPath(go, parentGoId, namespace);
-                    int pipeInTempResult = tempResult.length() - tempResult.replace("|", "").length();
-                    if (pipeInTempResult < pipeInMaxValue) {
-                        if (pipeInTempResult < pipeInBestResult) {
-                            bestResult = tempResult;
-                            pipeInBestResult = pipeInTempResult;
-                        }
-                    }
-                }
-                result = result.concat("|").concat(bestResult);
-                namespace.get(childGoId).shortestPathToGO.put(parentGoId, result);
-                return result;
+                result = result.concat("|").concat(shortestPathGoToCommon.get(i));
             }
         }
+        result = result.concat(" * ");
+        //convert ArrayList<String> shortestEnrichGOToCommon to result String
+        if (!shortestEnrichGOToCommon.get(shortestEnrichGOToCommon.size() - 1).equals(shortestPathGoToCommon.get(shortestPathGoToCommon.size() - 1))) {
+            System.err.println("Go_id: " + goId + " shortestPathGoToCommon: " + shortestPathGoToCommon.toString() + " and shortestEnrichGOToCommon " + shortestEnrichGOToCommon.toString());
+            System.err.println("letztes shortestPathGoToCommon: " + shortestPathGoToCommon.get(shortestPathGoToCommon.size() - 1) + " != letztes shortestEnrichGOToCommon: " + shortestEnrichGOToCommon.get(shortestEnrichGOToCommon.size() - 1));
+            // result = result.concat("|").concat(shortestEnrichGOToCommon.get(shortestEnrichGOToCommon.size() - 1));
+        }
+
+        for (int i = shortestEnrichGOToCommon.size() - 2; i >= 0; i--) {
+            // invert Path of tempEnrichGOToCommon
+            // Note: tempEnrichGOToCommon.size() - 2 to avoid duplicate
+            result = result.concat("|").concat(shortestEnrichGOToCommon.get(i));
+        }
+
+        // System.out.println("|getShortestPathToTrue| Shortest Path for " + goId + " to enrichGOs is: " + result);
+        return result;
     }
+
+    public static ArrayList<String> getShortestStringPath(String childGoId, String parentGoId, HashMap<String, GOclass> namespace) throws Exception {
+        if (childGoId.equals(parentGoId)) {
+            System.err.println("|getShortestStringPath| childGoId must be different from parentGoId. (" + childGoId + ")");
+            throw new Exception("This path leads not to a result.");
+        } else if (namespace.get(childGoId).shortestPathToGO.containsKey(parentGoId)) {
+            // Avoid double calculation
+            return namespace.get(childGoId).shortestPathToGO.get(parentGoId);
+        } else if (namespace.get(childGoId).is_a_original.contains(parentGoId)) {
+            ArrayList<String> result = new ArrayList<>();
+            result.add(namespace.get(childGoId).name);
+            result.add(namespace.get(parentGoId).name);
+            namespace.get(childGoId).shortestPathToGO.put(parentGoId, result);
+            if ((!result.get(0).equals(namespace.get(childGoId).name)) || (!result.get(result.size() - 1).equals(namespace.get(parentGoId).name))) {
+                // Error checking
+                System.err.println("|getShortestStringPath| is_a_original.contains(parentGo) First/last result does not equal child/parent. First: " + result.get(0) + " (" + namespace.get(childGoId).name + ") Last: " + result.get(result.size() - 1) + " (" + namespace.get(parentGoId).name + ")");
+            }
+            return result;
+        } else if (namespace.get(childGoId).is_a_original.isEmpty()) {
+            // This path leads not to a result
+            throw new Exception("This path leads not to a result.");
+        } else {
+            // Perform 'usual' calculation
+            double bestLength = Integer.MAX_VALUE;
+            ArrayList<String> result = new ArrayList<>();
+
+            for (String go : namespace.get(childGoId).is_a_original) {
+                ArrayList<String> tempResult = new ArrayList<>();
+                try {
+                    tempResult = getShortestStringPath(go, parentGoId, namespace);
+                } catch (Exception e) {
+                    // e.printStackTrace();
+                }
+
+                if (tempResult.size() < bestLength /*&& tempResult.size() > 0*/) {
+                    result.clear();
+                    result.add(namespace.get(childGoId).name);
+                    result.addAll((ArrayList<String>) tempResult.clone());
+                    bestLength = tempResult.size();
+                }
+            }
+            if (result.size() < 1) {
+                System.err.println("|getShortestStringPath| Best result cannot be < 1. child: " + childGoId + " parent: " + parentGoId);
+            }
+            if (!result.get(result.size() - 1).equals(namespace.get(parentGoId).name)) {
+                // Add parentGoId.name to the last recursive iteration
+                result.add(namespace.get(parentGoId).name);
+            }
+            namespace.get(childGoId).shortestPathToGO.put(parentGoId, result);
+            if ((!result.get(0).equals(namespace.get(childGoId).name)) || (!result.get(result.size() - 1).equals(namespace.get(parentGoId).name))) {
+                // Error checking
+                System.err.println("|getShortestStringPath| 'usual' First/last result does not equal child/parent. First: " + result.get(0) + " (" + namespace.get(childGoId).name + ") Last: " + result.get(result.size() - 1) + " (" + namespace.get(parentGoId).name + ")");
+            }
+            return result;
+        }
+    }
+
 
     public static String invertPath(String path) {
         //Invert GO:0001|GO:0002|GO:0003 to GO:0003|GO:0002|GO:0001
@@ -487,8 +555,7 @@ public class Runner {
         return result;
     }
 
-    private static HashMap<String, HashMap<String, GOclass>> updateAssociatedGeneIds(
-            HashMap<String, HashMap<String, GOclass>> namespaces, String root) {
+    private static HashMap<String, HashMap<String, GOclass>> updateAssociatedGeneIds(HashMap<String, HashMap<String, GOclass>> namespaces, String root) {
         System.out.println("Begin: updateAssociatedGeneIds...");
         // Add the associated genes of the children to every GOclass
         for (GOclass go : namespaces.get(root).values()) {
@@ -620,8 +687,7 @@ public class Runner {
         }
     }
 
-    public static HashMap<String, HashMap<String, GOclass>> parseAssociatedGeneIds(String mappingtype, File mapping,
-                                                                                   HashMap<String, HashMap<String, GOclass>> namespaces, String root) {
+    public static HashMap<String, HashMap<String, GOclass>> parseAssociatedGeneIds(String mappingtype, File mapping, HashMap<String, HashMap<String, GOclass>> namespaces, String root) {
         // mappingtype defines how mapping is processed
         if (mappingtype.equals("go")) {
             try {
@@ -799,7 +865,8 @@ public class Runner {
         return namespaces;
     }
 
-    public static void writeNamespaces(HashMap<String, HashMap<String, GOclass>> namespaces, String root, File output) {
+    public static void writeNamespaces(HashMap<String, HashMap<String, GOclass>> namespaces, String root, File
+            output) {
         try {
             // Create or overwrite new file
             PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(output, false)));
@@ -876,7 +943,8 @@ public class Runner {
         }
     }
 
-    public static HashSet<String> getParentalIsALinks(HashMap<String, GOclass> GOclassesInNamespace, String GO_id) {
+    public static HashSet<String> getParentalIsALinks(HashMap<String, GOclass> GOclassesInNamespace, String
+            GO_id) {
         // RECURSIVE
         // result = all parental is_a links of respective GO_id
         HashSet<String> result = new HashSet<String>();
