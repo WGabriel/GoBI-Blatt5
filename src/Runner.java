@@ -313,20 +313,18 @@ public class Runner {
             if (goId_enrich.equals(goId)) {
                 System.err.println("|getShortestPathToTrue| goId is not allowed to occur in enrichGO's: " + goId);
             }
-            //commonGOs is an intersection of enrich_goId.is_a and goId_is_a
+            //commonGOs is an INTERSECTION of enrich_goId.is_a and goId_is_a
             HashSet<String> commonGOs = new HashSet<>(namespace.get(goId).is_a_updated); // use the copy constructor
             commonGOs.retainAll(namespace.get(goId_enrich).is_a_updated);
 
             // add goId, if it occurs in goId_enrich.is_a_updated
             if (namespace.get(goId_enrich).is_a_updated.contains(goId)) {
-                commonGOs.add(namespace.get(goId_enrich).id);
+                commonGOs.add(goId);
             }
             // add goId_enrich, if it occurs in goId.is_a_updated
             if (namespace.get(goId).is_a_updated.contains(goId_enrich)) {
-                commonGOs.add(namespace.get(goId).id);
+                commonGOs.add(goId_enrich);
             }
-
-
             // End: gathering common GO's
 
             if (!commonGOs.isEmpty()) {
@@ -348,7 +346,7 @@ public class Runner {
                     // constructing path EnrichGO-->Common
                     ArrayList<String> tempEnrichGOToCommon = new ArrayList<>();
                     if (goId_enrich.equals(common)) {
-                        System.out.println("GO_enrich: " + goId_enrich + " common: " + common);
+                        System.out.println("enrich_goId: " + goId_enrich + " common: " + common);
                         tempEnrichGOToCommon = new ArrayList<>();
                         tempEnrichGOToCommon.add(namespace.get(goId_enrich).name);
                     } else {
