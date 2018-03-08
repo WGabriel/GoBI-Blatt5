@@ -332,7 +332,7 @@ public class Runner {
                     // constructing path GO-->Common
                     ArrayList<String> tempPathGoToCommon = new ArrayList<>();
                     if (goId.equals(common)) {
-                        System.out.println("goId: " + goId + " common: " + common);
+                        // System.out.println("goId: " + goId + " common: " + common);
                         tempPathGoToCommon = new ArrayList<>();
                         tempPathGoToCommon.add(namespace.get(goId).name);
                     } else {
@@ -346,7 +346,7 @@ public class Runner {
                     // constructing path EnrichGO-->Common
                     ArrayList<String> tempEnrichGOToCommon = new ArrayList<>();
                     if (goId_enrich.equals(common)) {
-                        System.out.println("enrich_goId: " + goId_enrich + " common: " + common);
+                        // System.out.println("enrich_goId: " + goId_enrich + " common: " + common);
                         tempEnrichGOToCommon = new ArrayList<>();
                         tempEnrichGOToCommon.add(namespace.get(goId_enrich).name);
                     } else {
